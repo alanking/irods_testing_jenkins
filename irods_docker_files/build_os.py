@@ -14,7 +14,7 @@ parser.add_argument('-b','--build_id', type=str, required=True)
 
 args = parser.parse_args()
 try:
-    output = builders.build_base_os_docker_image(args.platform_target, args.build_id)
+    output = builders.build_base_os_image(args.platform_target, args.build_id)
     for line in output:
         print(line)
 except docker.errors.APIError:

@@ -1,16 +1,17 @@
 #!/usr/bin/python
 
+# real modules
 from __future__ import print_function
-
 import argparse
 import subprocess
-import configuration
-import sys
-import ci_utilities
-import docker_cmds_utilities
-
 from subprocess import Popen, PIPE
+import sys
+
+# local
+import configuration
+import ci_utilities
 from docker_cmd_builder import DockerCommandsBuilder
+import docker_cmds_utilities
 
 
 def get_test_name_prefix(base_os, prefix):

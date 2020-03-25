@@ -8,20 +8,18 @@ ENV PLUGIN_REPO=${arg_plugin_repo}
 ARG arg_plugin_commitish="4-2-stable"
 ENV PLUGIN_COMMITISH=${arg_plugin_commitish}
 
-ENV IRODS_BUILD_DIRECTORY=/irods_build
+ARG arg_irods_build_directory="/irods_build"
+ENV IRODS_BUILD_DIRECTORY=${arg_irods_build_directory}
 
-ENV IRODS_PLUGIN_DIRECTORY=/irods_plugin
+ARG arg_plugin_directory="/irods_plugin"
+ENV IRODS_PLUGIN_DIRECTORY=${arg_plugin_directory}
 
-RUN mkdir -p $IRODS_PLUGIN_DIRECTORY &&\
-    chmod -R 775 $IRODS_PLUGIN_DIRECTORY &&\
-    git clone $PLUGIN_REPO $IRODS_PLUGIN_DIRECTORY && \
+ARG arg_plugin_build_directory="/plugin_build_output"
+ENV IRODS_PLUGIN_BUILD_DIRECTORY=${arg_plugin_build_directory}
+
+RUN git clone $PLUGIN_REPO $IRODS_PLUGIN_DIRECTORY && \
     cd $IRODS_PLUGIN_DIRECTORY && git checkout $PLUGIN_COMMITISH
 
-#RUN cd irods_build && mkdir Ubuntu_16 && cd Ubuntu_16 && touch testFile.txt
+# TODO: Volume mounts?
 
-ENV BUILD_HOOK = $IRODS_PLUGIN_DIRECTORY/irods_consortium_continuous_integration_build_hook.py
-
-# Set command to execute when launching the container.
-ADD build_plugin.py /
-RUN chmod u+x /build_plugin.py
-ENTRYPOINT ["python", "build_plugin.py"]
+ENTRYPOINT python $IRODS_PLUGIN_DIRECTORY/irods_consortium_continuous_integration_build_hook.py --output_root_directory $IRODS_PLUGIN_BUILD_DIRECTORY --irods_packages_root_directory $IRODS_BUILD_DIRECTORY
