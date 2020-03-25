@@ -18,3 +18,7 @@ database_dict = {
 
 docker_client_base_url = 'unix://var/run/docker.sock'
 
+default_irods_repo = 'https://github.com/irods/irods'
+default_irods_commitish = 'master'
+default_icommands_repo = 'https://github.com/irods/irods_client_icommands'
+default_icommands_commitish = 'master'

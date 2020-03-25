@@ -25,5 +25,25 @@ def build_base_os_docker_image(platform_target, build_id='0'):
     base_os = configuration.os_identifier_dict[platform_target]
     dockerfile = configuration.platform_dockerfile_map[platform_target]
     build_tag = ':'.join([platform_target, build_id])
-    build_args = {'base_image' : base_os}
+    build_args = {'base_image': base_os}
     return build_docker_image(dockerfile=dockerfile, tag=build_tag, build_args=build_args)
+
+## build_irods_builder_image
+# @return output of build_docker_image
+def build_irods_builder_image(
+    base_os_image_tag,
+    image_tag,
+    irods_repo=configuration.default_irods_repo,
+    irods_commitish=configuration.default_irods_commitish,
+    icommands_repo=configuration.default_icommands_repo,
+    icommands_commitish=configuration.default_icommands_commitish):
+
+    dockerfile = 'Dockerfile.build_irods'
+    build_args = {
+        'base_image': base_os_image_tag,
+        'arg_irods_repo': irods_repo,
+        'arg_irods_commitish': irods_commitish,
+        'arg_icommands_repo': icommands_repo,
+        'arg_irods_commitish': irods_commitish
+    }
+    return build_docker_image(dockerfile=dockerfile, tag=image_tag, build_args=build_args)
