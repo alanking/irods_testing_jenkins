@@ -25,10 +25,7 @@ def run_tests(image_name, irods_sha, test_name_prefix, cmd_line_args, skip_unit_
     options.append(['--irods_commitish', irods_sha])
     options.append(['--test_parallelism', cmd_line_args.test_parallelism])
     options.append(['--externals_dir', cmd_line_args.externals_dir])
-    if skip_unit_tests is False:
-        options.append(['--is_unit_test'])
-    if cmd_line_args.run_timing_tests:
-        options.append(['--run_timing_tests'])
+    options.append(['--run_timing_tests'])
 
     run_tests_cmd_list = ['python', 'run_tests_in_parallel.py']
     for option in options:
@@ -49,8 +46,6 @@ def main():
     parser.add_argument('--database_type', default='postgres', help='database type', required=True)
     parser.add_argument('--test_parallelism', default='4', help='The number of tests to run in parallel', required=False)
     parser.add_argument('-o', '--output_directory', type=str, required=True)
-    parser.add_argument('--skip_unit_tests', action='store_true', default=False)
-    parser.add_argument('--run_timing_tests', action='store_true', default=False)
     args = parser.parse_args()
 
     base_image = ci_utilities.get_base_image(args.platform_target, args.image_tag)
