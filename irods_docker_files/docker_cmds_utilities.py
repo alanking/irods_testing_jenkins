@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from __future__ import print_function
 
+import docker
 import time
 import tempfile
 import os
@@ -52,23 +53,23 @@ def connect_to_network(machine_name, alias_name, network_name):
     _out, _err = proc.communicate()
 
 def delete_network(network_name):
+    client = docker.from_env()
     while True:
-        rm_network = Popen(['docker', 'network', 'rm', network_name], stdout=PIPE, stderr=PIPE)
-        _nout, _nerr = rm_network.communicate()
-        if 'error' not in _nerr:
+        try:
+            client.networks.get(network_name).remove()
             break
-        time.sleep(1)
+        except docker.errors.APIError:
+            time.sleep(1)
 
 def is_container_running(container_name):
-    _running = False
-    state_cmd = ['docker', 'inspect', '-f', '{{.State.Running}}', container_name]
-    while not _running:
-        state_proc = Popen(state_cmd, stdout=PIPE, stderr=PIPE)
-        _sout, _serr = state_proc.communicate()
-        if 'true' in _sout:
-            _running = True
-        time.sleep(1)
-    return _running
+    client = docker.from_env()
+    while True:
+        try:
+            if client.containers.get(container_name).status is 'running':
+                return True
+        except docker.errors.NotFound:
+            # container has not been created yet
+            pass
 
 def check_container_health(container_name):
     while True:
@@ -159,16 +160,27 @@ def run_database(database_type, database_container, alias_name, network_name):
         if _running:
             connect_to_network(database_container, database_alias, network_name)
 
-def run_command_in_container(run_cmd, exec_cmd, stop_cmd, irods_container, alias_name, database_container, database_type, network_name, **kwargs):
+def run_command_in_container(
+    run_cmd,
+    exec_cmd,
+    stop_cmd,
+    irods_container,
+    alias_name,
+    database_container,
+    database_type,
+    network_name,
+    **kwargs):
+
     # the docker run command (stand up a container)
     run_proc = Popen(run_cmd, stdout=PIPE, stderr=PIPE)
     _out, _err = run_proc.communicate()
     if database_container is not None:
-        if 'test_type' in kwargs and kwargs['test_type'] == 'standalone_icat':
-            create_network(network_name)
-            run_database(database_type, database_container, alias_name, network_name)
-        if 'test_type' in kwargs and 'topology' in kwargs['test_type'] and 'machine_list' in kwargs:
-            install_ssl_files(kwargs['machine_list'])
+        if 'test_type' in kwargs 
+            if kwargs['test_type'] == 'standalone_icat':
+                create_network(network_name)
+                run_database(database_type, database_container, alias_name, network_name)
+            if 'topology' in kwargs['test_type'] and 'machine_list' in kwargs:
+                install_ssl_files(kwargs['machine_list'])
 
         if is_container_running(irods_container):
             connect_to_network(irods_container, alias_name, network_name)

@@ -14,9 +14,11 @@ import configuration
 def build_docker_image(
     dockerfile,
     tag,
-    context_dir=os.getcwd(),
+    context_dir=None,
     build_args=None):
 
+    if context_dir is None:
+        context_dir = os.getcwd()
     client = docker.APIClient(base_url=configuration.docker_client_base_url)
     return [line[line.keys()[0]] for line in client.build(
         path=context_dir,
@@ -83,11 +85,32 @@ def build_plugin_builder_image(
         'arg_plugin_commitish': plugin_commitish,
         'arg_plugin_build_directory': plugin_build_directory
     }
-        #'arg_plugin_commitish': plugin_commitish,
-        #'arg_irods_build_directory': irods_build_directory,
-        #'arg_plugin_directory': plugin_build_directory
-    #}
     return build_docker_image(
         dockerfile=dockerfile,
         tag=image_tag,
         build_args=build_args)
+
+def build_irods_runner_image(
+    build_tag,
+    base_image,
+    dockerfile='Dockerfile.install_and_test'):
+
+    build_args = {'base_image': base_image}
+    return build_docker_image(
+        dockerfile=dockerfile,
+        tag=build_tag,
+        build_args=build_args)
+
+def build_database_image(database_type):
+    database_image_tag = configuration.database_dict[database_type]
+    if database_type is 'oracle':
+        return build_docker_image(
+            dockerfile='Dockerfile.xe',
+            tag=database_image_tag)
+    else:
+        client = docker.from_env()
+        database_images_list = client.images.list(name=database_image_tag):
+        if not database_images_list:
+            return client.images.pull(database_image_tag)
+        return database_images_list
+

@@ -13,7 +13,8 @@ platform_dockerfile_map = {
 database_dict = {
     'mariadb': 'mariadb:10.1',
     'mysql': 'mysql:5.7',
-    'postgres': 'postgres:12.1'
+    'postgres': 'postgres:12.1',
+    'oracle': 'oracle/database:11.2.0.2-xe'
 }
 
 docker_client_base_url = 'unix://var/run/docker.sock'
@@ -22,3 +23,5 @@ default_irods_repo = 'https://github.com/irods/irods'
 default_irods_commitish = 'master'
 default_icommands_repo = 'https://github.com/irods/irods_client_icommands'
 default_icommands_commitish = 'master'
+
+mysql_mount = '/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz:/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz'
