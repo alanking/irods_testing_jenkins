@@ -70,9 +70,7 @@ def main():
     parser.add_argument('--provider_machine', help='provider container name', default=None)
     parser.add_argument('--network_name', help='network name', default=None)
     args = parser.parse_args()
-
-    database_type = args.database_type
-    configure_database(database_type, args.database_machine, args.provider_machine, args.network_name)
+    configure_database(args.database_type, args.database_machine, args.provider_machine, args.network_name)
     
 if __name__ == '__main__':
     main()

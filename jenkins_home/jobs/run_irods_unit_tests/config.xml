@@ -58,16 +58,6 @@
           <defaultValue>4</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
-        <hudson.model.BooleanParameterDefinition>
-          <name>PARAMETER_RUN_UNIT_TESTS</name>
-          <description></description>
-          <defaultValue>true</defaultValue>
-        </hudson.model.BooleanParameterDefinition>
-        <hudson.model.BooleanParameterDefinition>
-          <name>PARAMETER_RUN_TIMING_TESTS</name>
-          <description></description>
-          <defaultValue>true</defaultValue>
-        </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
@@ -78,12 +68,12 @@
      def output_directory = env.JENKINS_OUTPUT + &apos;/&apos; + env.JOB_NAME + &apos;/&apos; + build_id
      def dockerfile_dir = env.GLOBAL_PARAMETER_DOCKER_REPO
      dir(dockerfile_dir) {
-         stage(&apos;Install And Run Tests&apos;) {
+         stage(&apos;Install And Run Unit Tests&apos;) {
              def base_os = PARAMETER_PLATFORM_TARGETS.split(&apos;,&apos;)
              def parallelBranches = [:]
              for(int i = 0; i &lt; base_os.size(); i++) {
                 def os = base_os[i]
-                def run_cmd = &apos;python run_tests.py -p &apos; + os +
+                def run_cmd = &apos;python run_unit_tests.py -p &apos; + os +
                               &apos; --image_tag &apos; + PARAMETER_IMAGE_TAG +
                               &apos; -b &apos; + build_id +
                               &apos; --test_name_prefix ${BUILD_TAG} &apos; +
@@ -94,12 +84,6 @@
                               &apos; --irods_commitish &apos; + PARAMETER_IRODS_COMMITISH +
                               &apos; --test_parallelism &apos; + PARAMETER_TEST_PARALLELISM +
                               &apos; --externals_dir &apos; + PARAMETER_EXTERNALS_ROOT_DIR
-                if (PARAMETER_RUN_UNIT_TESTS == &quot;false&quot;) {
-                    run_cmd = run_cmd + &apos; --skip_unit_tests&apos;
-                }
-                if (PARAMETER_RUN_TIMING_TESTS == &quot;true&quot;) {
-                    run_cmd = run_cmd + &apos; --run_timing_tests&apos;
-                }
                 parallelBranches[&quot;${os}&quot;] = {
                     sh run_cmd 
                 }

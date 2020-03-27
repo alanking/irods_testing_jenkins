@@ -13,7 +13,7 @@ import ci_utilities
 import docker_cmds_utilities
 
 
-def run_tests(image_name, irods_sha, test_name_prefix, cmd_line_args, skip_unit_tests=False):
+def run_tests(image_name, irods_sha, test_name_prefix, cmd_line_args):
     # build options list for run_tests_in_parallel
     options = []
     options.append(['--image_name', image_name])
@@ -25,8 +25,6 @@ def run_tests(image_name, irods_sha, test_name_prefix, cmd_line_args, skip_unit_
     options.append(['--irods_commitish', irods_sha])
     options.append(['--test_parallelism', cmd_line_args.test_parallelism])
     options.append(['--externals_dir', cmd_line_args.externals_dir])
-    if skip_unit_tests is False:
-        options.append(['--is_unit_test'])
     if cmd_line_args.run_timing_tests:
         options.append(['--run_timing_tests'])
 
@@ -49,7 +47,6 @@ def main():
     parser.add_argument('--database_type', default='postgres', help='database type', required=True)
     parser.add_argument('--test_parallelism', default='4', help='The number of tests to run in parallel', required=False)
     parser.add_argument('-o', '--output_directory', type=str, required=True)
-    parser.add_argument('--skip_unit_tests', action='store_true', default=False)
     parser.add_argument('--run_timing_tests', action='store_true', default=False)
     args = parser.parse_args()
 
@@ -59,7 +56,7 @@ def main():
     test_name_prefix = args.platform_target + '_' + args.test_name_prefix.replace('-', '_')
 
     irods_sha = ci_utilities.get_sha_from_commitish(args.irods_repo, args.irods_commitish)
-    run_tests(build_tag, irods_sha, test_name_prefix, args, args.skip_unit_tests)
+    run_tests(build_tag, irods_sha, test_name_prefix, args)
 
 if __name__ == '__main__':
     main()

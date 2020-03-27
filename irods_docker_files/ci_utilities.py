@@ -19,6 +19,7 @@ from subprocess import Popen, PIPE
 # Dereference commitish (branch name, SHA, partial SHA, etc.) to a full SHA
 def get_sha_from_commitish(_repo, _commitish):
     try:
+        # TODO: Look into conditional requests: https://developer.github.com/v3/#conditional-requests
         repo = urlparse(_repo).path.strip('/')
         sha = Github().get_repo(repo).get_commit(_commitish).sha
         print('found [{_repo}@{_commitish}] as sha:{sha}'.format(**locals()))

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from __future__ import print_function
 
+import docker
 import time
 import tempfile
 import os
@@ -40,35 +41,44 @@ def build_irods_zone(build_tag, base_image, database_type, dockerfile='Dockerfil
                 subprocess.check_call(pull_image, shell=True)
 
 def create_network(network_name):
-    check_network = Popen(['docker', 'network', 'ls'], stdout=PIPE, stderr=PIPE)
-    _out, _err = check_network.communicate()
-    if not network_name in _out:
-        docker_cmd = ['docker', 'network', 'create', '--attachable', network_name]
-        network = subprocess.check_call(docker_cmd)
+    client = docker.from_env()
+    try:
+        client.networks.get(network_name)
+    except docker.errors.NotFound:
+        client.networks.create(
+            name=network_name,
+            attachable=True)
 
 def connect_to_network(machine_name, alias_name, network_name):
-    network_cmd = ['docker', 'network', 'connect', '--alias', alias_name, network_name, machine_name]
-    proc = Popen(network_cmd, stdout=PIPE, stderr=PIPE)
-    _out, _err = proc.communicate()
+    client = docker.from_env()
+    client.networks.get(network_name).connect(
+        container=machine_name,
+        aliases=[alias_name])
 
 def delete_network(network_name):
+    client = docker.from_env()
     while True:
-        rm_network = Popen(['docker', 'network', 'rm', network_name], stdout=PIPE, stderr=PIPE)
-        _nout, _nerr = rm_network.communicate()
-        if 'error' not in _nerr:
+        try:
+            client.networks.get(network_name).remove()
             break
-        time.sleep(1)
+        except docker.errors.APIError:
+            time.sleep(1)
 
 def is_container_running(container_name):
-    _running = False
-    state_cmd = ['docker', 'inspect', '-f', '{{.State.Running}}', container_name]
-    while not _running:
-        state_proc = Popen(state_cmd, stdout=PIPE, stderr=PIPE)
-        _sout, _serr = state_proc.communicate()
-        if 'true' in _sout:
-            _running = True
+    client = docker.from_env()
+    while True:
+        try:
+            container_status = client.containers.get(container_name).status
+            print('['+container_name+'] has status:['+container_status+']')
+            if container_status == 'running':
+                print('container ['+container_name+'] is running')
+                return True
+            print('container ['+container_name+'] not running yet')
+        except docker.errors.NotFound:
+            # container has not been created yet
+            print('container ['+container_name+'] does not exist')
+            pass
         time.sleep(1)
-    return _running
 
 def check_container_health(container_name):
     while True:
@@ -129,46 +139,69 @@ def create_self_signed_certificate(filename_key, filename_certificate):
 def create_diffie_hellman_parameters(filename):
     subprocess.check_call(['openssl', 'dhparam', '-2', '-out', filename, '1024'])
 
-def run_database(database_type, database_container, alias_name, network_name):
-    database_alias = 'database.example.org'
-    if database_type == 'oracle':
-        database_alias = 'oracle.example.org'
-        run_cmd = ['docker', 'run', '-d', '--rm',  '--name', database_container, '--shm-size=1g', '-e', 'ORACLE_PWD=testpassword', 'oracle/database:11.2.0.2-xe']
+def run_database(
+    database_type,
+    database_container,
+    alias_name,
+    network_name):
+
+    import configuration
+    database_image = configuration.database_dict[database_type]
+    client = docker.from_env()
+    if 'otherZone' in alias_name:
+        database_alias = '.'.join([database_type, 'otherZone', 'example', 'org'])
     else:
-        import configuration
+        database_alias = '.'.join([database_type, 'example', 'org'])
 
-        database_image = configuration.database_dict[database_type]
-        run_cmd = ['docker', 'run', '-d', '--rm',  '--name', database_container]
-        if database_type == 'postgres':
-            database_alias = 'postgres.example.org'
-            if 'otherZone' in alias_name:
-                database_alias = 'postgres.otherZone.example.org'
-            passwd_env_var = 'POSTGRES_PASSWORD=testpassword'
-        elif database_type == 'mysql' or database_type == 'mariadb':
-            database_alias = 'mysql.example.org'
-            if 'otherZone' in alias_name:
-                database_alias = 'postgres.otherZone.example.org'
-            passwd_env_var = 'MYSQL_ROOT_PASSWORD=password'
-            run_cmd.extend(['-e', 'MYSQL_DATABASE=ICAT', '-e', 'MYSQL_USER=irods', '-e', 'MYSQL_PASSWORD=testpassword'])
-        run_cmd.extend(['-e', passwd_env_var, '-h', database_alias, database_image])
-        print('database_run_cmd --> ', run_cmd)
+    if database_type == 'oracle':
+        env = {
+            'ORACLE_PWD': 'testpassword'
+        }
+    elif database_type == 'mysql' or database_type == 'mariadb':
+        env = {
+            'MYSQL_ROOT_PASSWORD': 'password',
+            'MYSQL_DATABASE': 'ICAT',
+            'MYSQL_USER': 'irods',
+            'MYSQL_PASSWORD': 'testpassword'
+        }
+    else:
+        env = None
 
-        run_proc = Popen(run_cmd, stdout=PIPE, stderr=PIPE)
-        _out, _err = run_proc.communicate()
-        _running = is_container_running(database_container)
-        if _running:
-            connect_to_network(database_container, database_alias, network_name)
+    print('running database container:['+database_image+'] as ['+database_container+']')
+    client.containers.run(
+        image=database_image,
+        command=None,
+        detach=True,
+        remove=True,
+        environment=env,
+        hostname=database_alias,
+        name=database_container,
+        shm_size='1G')
 
-def run_command_in_container(run_cmd, exec_cmd, stop_cmd, irods_container, alias_name, database_container, database_type, network_name, **kwargs):
+    if is_container_running(database_container):
+        connect_to_network(database_container, database_alias, network_name)
+
+def run_command_in_container(
+    run_cmd,
+    exec_cmd,
+    stop_cmd,
+    irods_container,
+    alias_name,
+    database_container,
+    database_type,
+    network_name,
+    **kwargs):
+
     # the docker run command (stand up a container)
     run_proc = Popen(run_cmd, stdout=PIPE, stderr=PIPE)
     _out, _err = run_proc.communicate()
     if database_container is not None:
-        if 'test_type' in kwargs and kwargs['test_type'] == 'standalone_icat':
-            create_network(network_name)
-            run_database(database_type, database_container, alias_name, network_name)
-        if 'test_type' in kwargs and 'topology' in kwargs['test_type'] and 'machine_list' in kwargs:
-            install_ssl_files(kwargs['machine_list'])
+        if 'test_type' in kwargs:
+            if kwargs['test_type'] == 'standalone_icat':
+                create_network(network_name)
+                run_database(database_type, database_container, alias_name, network_name)
+            if 'topology' in kwargs['test_type'] and 'machine_list' in kwargs:
+                install_ssl_files(kwargs['machine_list'])
 
         if is_container_running(irods_container):
             connect_to_network(irods_container, alias_name, network_name)
