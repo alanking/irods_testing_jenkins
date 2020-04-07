@@ -110,12 +110,12 @@ def install_ssl_files(machine_list):
 def copy_file_to_machines(machine_list, src, dst):
     if machine_list is not None:
         for machine in machine_list.split(' '):
-            print(machine)
-            print(src, ' --- ', dst)
-            print(os.path.exists(src))
+            print('copying [{0}] (exists:{1}) to dst [{2}] on container [{3}]'.format(str(src), str(os.path.exists(src)), str(dst), str(machine)))
             copy_cmd = "docker cp {0} {1}:{2}".format(src, machine, dst)
-            print(copy_cmd)
-            copy_proc = subprocess.check_call(copy_cmd, shell=True)
+            running = is_container_running(machine)
+            if running:
+                print(copy_cmd)
+                copy_proc = subprocess.check_call(copy_cmd, shell=True)
 
 def create_rsa_keyfile(filename):
     subprocess.check_call(['openssl', 'genrsa', '-out', filename])
@@ -168,7 +168,7 @@ def run_command_in_container(run_cmd, exec_cmd, stop_cmd, irods_container, alias
             if kwargs['test_type'] == 'standalone_icat':
                 create_network(network_name)
                 run_database(database_type, database_container, alias_name, network_name)
-            if 'topology' in kwargs['test_type'] and 'machine_list' in kwargs and kwargs['use_ssl'] is True:
+            if 'topology' in kwargs['test_type'] and 'machine_list' in kwargs and kwargs['use_ssl'] is True and alias_name == 'icat.example.org':
                 install_ssl_files(kwargs['machine_list'])
 
         if is_container_running(irods_container):

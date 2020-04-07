@@ -50,7 +50,6 @@ def create_topology(cmd_line_args, provider_tag, consumer_tag_list, machine_list
     mysql_mount = '/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz:/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz'
 
     provider_name = cmd_line_args.platform_target + '-' + cmd_line_args.test_name_prefix + '-provider'
-    print(network_name)
     machine_list.append(provider_name)
 
     database_container = cmd_line_args.platform_target + '_' + cmd_line_args.test_name_prefix + '_' + cmd_line_args.test_type + '_' + cmd_line_args.database_type + '-database'
@@ -63,8 +62,8 @@ def create_topology(cmd_line_args, provider_tag, consumer_tag_list, machine_list
     provider_exec_cmd = cmdsBuilder.build_exec_cmd()
     provider_stop_cmd = cmdsBuilder.build_stop_cmd()
 
-    print(provider_run_cmd)
-    print(provider_exec_cmd)
+    print('provider_run_cmd:    ' + str(provider_run_cmd))
+    print('provider_exec_cmd:    ' + str(provider_exec_cmd))
 
     provider_alias = 'icat.example.org'
 
@@ -87,8 +86,8 @@ def create_topology(cmd_line_args, provider_tag, consumer_tag_list, machine_list
         docker_run_list.append(consumer_run_cmd)
         consumer_exec_cmd = cmdsBuilder.build_exec_cmd()
         
-        print(consumer_run_cmd)
-        print(consumer_exec_cmd)
+        print('consumer_run_cmd:    ' + str(consumer_run_cmd))
+        print('consumer_exec_cmd:    ' + str(consumer_exec_cmd))
         consumer_stop_cmd = cmdsBuilder.build_stop_cmd()
     
         docker_cmd = docker_cmds_utilities.get_docker_cmd(consumer_run_cmd, consumer_exec_cmd, consumer_stop_cmd, consumer_name, resource_name, database_container, cmd_line_args.database_type, network_name, extra_args)

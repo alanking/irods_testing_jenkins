@@ -23,19 +23,15 @@ def get_externals_directory():
     return '/irods_externals'
 
 def check_ports_open(machine_name):
-    print(machine_name)
     listen_cmd = ['nc', '-vz', machine_name, '1247']
     status = 'refused'
     while status == 'refused':
         proc = subprocess.Popen(listen_cmd, stdout = PIPE, stderr = PIPE)
         _out, _err = proc.communicate()
-        print('_err ', _err)
         if 'Connection refused' in (_err):
             time.sleep(1)
         if 'open' in (_err):
             status = 'open'
-        print('status ', status)
-
     return status
 
 def set_univmss():
@@ -120,18 +116,24 @@ def main():
             check_ports_open('resource2.example.org')
             check_ports_open('resource3.example.org')
             ci_utilities.upgrade(get_upgrade_packages_directory(), args.database_type, args.install_externals, get_externals_directory(), is_provider = args.is_provider)
+
+        # TODO: wait for provider to enable ssl...
+        time.sleep(60)
+        if args.use_ssl:
+            import enable_ssl
+            print('enabling SSL on [' + args.alias_name + ']')
+            enable_ssl.enable_ssl()
+
         if args.test_type == 'topology_resource' and args.alias_name == 'resource1.example.org':
             status = check_ports_open('icat.example.org')
             if status == 'open':
-                if args.use_ssl:
-                     import enable_ssl
-                     enable_ssl.enable_ssl()
                 rc = run_tests(args.test_type, args.test_name, args.database_type, args.use_ssl)
                 sys.exit(rc)
         else:
+            print('waiting on topology to be up:[' + args.alias_name + ']')
+            print('[{0}] waiting for [{1}] to stand up irods'.format(args.alias_name, 'icat.example.org'))
             check_ports_open('icat.example.org')
-            check_ports_open('resource2.example.org')
-            check_ports_open('resource3.example.org')
+            print('checking topo state on [' + args.alias_name + ']')
             check_topo_state('icat.example.org', args.database_type)
     else:
         ci_utilities.setup_irods(args.database_type, 'tempZone', args.database_machine)
@@ -142,12 +144,25 @@ def main():
             check_ports_open('resource2.example.org')
             check_ports_open('resource3.example.org')
             ci_utilities.upgrade(get_upgrade_packages_directory(), args.database_type, args.install_externals, get_externals_directory(), is_provider = args.is_provider)
+
+        # Do not enable SSL before consumers have had a chance to set up
+        check_ports_open('resource1.example.org')
+        check_ports_open('resource2.example.org')
+        check_ports_open('resource3.example.org')
+        time.sleep(60)
+        if args.use_ssl:
+            import enable_ssl
+            print('enabling ssl on [' + args.alias_name + ']')
+            enable_ssl.enable_ssl()
+        time.sleep(100)
         if args.test_type == 'topology_icat':
+            print('[{0}] waiting for [{1}] to stand up irods'.format(args.alias_name, 'resource1.example.org'))
             status = check_ports_open('resource1.example.org')
+            print('[{0}] waiting for [{1}] to stand up irods'.format(args.alias_name, 'resource2.example.org'))
+            check_ports_open('resource2.example.org')
+            print('[{0}] waiting for [{1}] to stand up irods'.format(args.alias_name, 'resource3.example.org'))
+            check_ports_open('resource3.example.org')
             if status == 'open':
-                if args.use_ssl:
-                     import enable_ssl
-                     enable_ssl.enable_ssl()
                 rc = run_tests(args.test_type, args.test_name, args.database_type, args.use_ssl)
                 sys.exit(rc)
         else:
