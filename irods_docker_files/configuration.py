@@ -10,6 +10,11 @@ platform_dockerfile_map = {
     'ubuntu_16' : 'Dockerfile.ubuntu'
 }
 
+platform_packages_dir_map = {
+    'centos_7' : 'Centos linux_7',
+    'ubuntu_16' : 'Ubuntu_16'
+}
+
 database_dict = {
     'mariadb': 'mariadb:10.1',
     'mysql': 'mysql:5.7',

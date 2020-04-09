@@ -1,0 +1,97 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.38">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.31">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_PLATFORM_TARGETS</name>
+          <description>ubuntu_16,centos_7</description>
+          <defaultValue>ubuntu_16,centos_7</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_UNIQUE_JOB_ID</name>
+          <description>the tag for the base os images</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_ICOMMANDS_REPO</name>
+          <description></description>
+          <defaultValue>https://github.com/irods/irods_client_icommands</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_ICOMMANDS_COMMITISH</name>
+          <description></description>
+          <defaultValue>master</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_REPO_IDENTIFIER</name>
+          <description>A keyword to identify the directory to which the code repository will be cloned and from which packages will be built.
+
+Constructed into a full path like this:
+/jenkins_output/&lt;PARAMETER_REPO_IDENTIFIER&gt;/&lt;BUILD_ID&gt;</description>
+          <defaultValue>irods_client_icommands</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY</name>
+          <description>Full path to top-level directory which holds built iRODS packages</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>PARAMETER_IGNORE_CACHE</name>
+          <description>If the target directory already exists and is not empty, it will be removed. If not, the directory will be left alone and the clone will be skipped.</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>node {
+    def output_directory = env.JENKINS_OUTPUT + &apos;/&apos; + env.JOB_NAME + &apos;/&apos; + PARAMETER_UNIQUE_JOB_ID
+    stage(&quot;Clone Repository&quot;) {                                           
+        b = build job: &quot;clone_git_repository&quot;,                            
+            parameters: [                                                 
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPOSITORY&apos;, value: PARAMETER_ICOMMANDS_REPO],
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_COMMITISH&apos;, value: PARAMETER_ICOMMANDS_COMMITISH],
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_IGNORE_CACHE&apos;, value: PARAMETER_IGNORE_CACHE]
+            ]   
+    }   
+    def platform_targets = PARAMETER_PLATFORM_TARGETS.split(&apos;,&apos;)
+    def parallelBuilds = [:]
+    for(int i = 0; i &lt; platform_targets.size(); i++) { 
+        def os = platform_targets[i]
+        parallelBuilds[&quot;${os}&quot;] = { 
+            stage(&quot;Build iCommands Packages&quot;) { 
+                b = build job: &quot;build_icommands&quot;,
+                    parameters: [ 
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_PLATFORM_TARGET&apos;, value: os],
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY&apos;, value: PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY]
+                    ]
+            }
+        }
+    }
+    if (parallelBuilds.size() != 0) { 
+        parallel(parallelBuilds)
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
