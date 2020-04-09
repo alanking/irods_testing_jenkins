@@ -16,5 +16,8 @@ database_dict = {
     'postgres': 'postgres:10.12'
 }
 
+base_os_image_name = 'irods-build-and-test-base-os'
+
 docker_client_base_url = 'unix://var/run/docker.sock'
 
+build_hook_filename = 'irods_consortium_continuous_integration_build_hook.py'
