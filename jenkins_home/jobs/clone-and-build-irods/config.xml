@@ -43,6 +43,17 @@ Constructed into a full path like this:
           <defaultValue>irods</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_EXTERNALS_ROOT_DIRECTORY</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>PARAMETER_IGNORE_CACHE</name>
+          <description>If the target directory already exists and is not empty, it will be removed. If not, the directory will be left alone and the clone will be skipped.</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
@@ -55,7 +66,8 @@ Constructed into a full path like this:
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPOSITORY&apos;, value: PARAMETER_IRODS_REPO],
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_COMMITISH&apos;, value: PARAMETER_IRODS_COMMITISH],
-                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER]
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                [$class: &apos;BooleanParameterValue&apos;, name: &apos;PARAMETER_IGNORE_CACHE&apos;, value: PARAMETER_IGNORE_CACHE]
             ]   
     }   
     def platform_targets = PARAMETER_PLATFORM_TARGETS.split(&apos;,&apos;)
@@ -68,7 +80,8 @@ Constructed into a full path like this:
                     parameters: [ 
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_PLATFORM_TARGET&apos;, value: os],
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
-                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER]
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_EXTERNALS_ROOT_DIRECTORY&apos;, value: PARAMETER_EXTERNALS_ROOT_DIRECTORY]
                     ]
             }
         }
