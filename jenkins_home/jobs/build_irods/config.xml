@@ -31,6 +31,12 @@ Constructed into a full path like this:
           <defaultValue>irods</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_EXTERNALS_ROOT_DIRECTORY</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
@@ -44,6 +50,9 @@ Constructed into a full path like this:
                         &apos; -b &apos; + PARAMETER_UNIQUE_JOB_ID +
                         &apos; -o &apos; + output_directory +
                         &apos; --repo_directory_identifier &apos; + PARAMETER_REPO_IDENTIFIER
+        if (!PARAMETER_EXTERNALS_ROOT_DIRECTORY.equals(&apos;&apos;)) {
+            build_cmd = build_cmd + &apos; --externals_packages_directory &apos; + PARAMETER_EXTERNALS_ROOT_DIRECTORY
+        }
         sh build_cmd
     }
 }</script>
