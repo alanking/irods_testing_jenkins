@@ -18,55 +18,60 @@
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_UNIQUE_JOB_ID</name>
-          <description>the tag for the base os images</description>
+          <description>Unique identifier for this job which is distinct from the build ID of this particular Jenkins project. The unique ID can be shared with other Jenkins projects to build a pipeline.</description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_IRODS_REPO</name>
           <description></description>
           <defaultValue>https://github.com/irods/irods</defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_IRODS_COMMITISH</name>
           <description></description>
           <defaultValue>master</defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>PARAMETER_REPO_IDENTIFIER</name>
-          <description>A keyword to identify the directory to which the code repository will be cloned and from which packages will be built.
-
-Constructed into a full path like this:
-/jenkins_output/&lt;PARAMETER_REPO_IDENTIFIER&gt;/&lt;BUILD_ID&gt;</description>
-          <defaultValue>irods</defaultValue>
-          <trim>false</trim>
+          <name>PARAMETER_SOURCE_DIRECTORY</name>
+          <description>Destination directory for repository clone. REMEMBER: Jenkins is running in a container - check your mounted volumes!</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_EXTERNALS_ROOT_DIRECTORY</name>
           <description></description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>PARAMETER_IGNORE_CACHE</name>
           <description>If the target directory already exists and is not empty, it will be removed. If not, the directory will be left alone and the clone will be skipped.</description>
-          <defaultValue>false</defaultValue>
+          <defaultValue>true</defaultValue>
         </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
     <script>node {
-    def output_directory = env.JENKINS_OUTPUT + &apos;/&apos; + env.JOB_NAME + &apos;/&apos; + PARAMETER_UNIQUE_JOB_ID
+    def unique_id = PARAMETER_UNIQUE_JOB_ID
+    if (!PARAMETER_UNIQUE_JOB_ID) {
+        unique_id = env.BUILD_ID
+    }
+
+    def source_directory = PARAMETER_SOURCE_DIRECTORY
+
+    def output_directory = env.JENKINS_OUTPUT + &apos;/&apos; + env.JOB_NAME + &apos;/&apos; + unique_id
+
     stage(&quot;Clone Repository&quot;) {                                           
         b = build job: &quot;clone_git_repository&quot;,                            
             parameters: [                                                 
-                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: unique_id],
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPOSITORY&apos;, value: PARAMETER_IRODS_REPO],
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_COMMITISH&apos;, value: PARAMETER_IRODS_COMMITISH],
-                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_CLONE_TARGET_DIRECTORY&apos;, value: PARAMETER_SOURCE_DIRECTORY],
                 [$class: &apos;BooleanParameterValue&apos;, name: &apos;PARAMETER_IGNORE_CACHE&apos;, value: PARAMETER_IGNORE_CACHE]
             ]   
     }   
@@ -80,7 +85,7 @@ Constructed into a full path like this:
                     parameters: [ 
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_PLATFORM_TARGET&apos;, value: os],
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
-                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_SOURCE_DIRECTORY&apos;, value: PARAMETER_SOURCE_DIRECTORY],
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_EXTERNALS_ROOT_DIRECTORY&apos;, value: PARAMETER_EXTERNALS_ROOT_DIRECTORY]
                     ]
             }

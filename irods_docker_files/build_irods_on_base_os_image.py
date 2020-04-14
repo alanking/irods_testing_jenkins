@@ -8,13 +8,13 @@ import configuration
 
 def build_irods_packages(
     platform_target,
-    build_id,
+    unique_id,
     input_directory,
     output_directory,
     externals_directory=None):
 
     base_os_image_tag = ':'.join([configuration.base_os_image_name, platform_target])
-    irods_builder_container_name = '-'.join([platform_target, 'build_irods', build_id])
+    irods_builder_container_name = '-'.join([platform_target, 'build_irods', unique_id])
     input_directory_bind = '/irods_code_to_build'
     externals_directory_bind = '/externals_to_use_with_build'
     output_directory_bind = '/built_packages_output'
@@ -57,22 +57,24 @@ def build_irods_packages(
 
 def main():
     parser = argparse.ArgumentParser(description='Build iRODS from local repository')
-    parser.add_argument('-p', '--platform_target', type=str, required=True)
-    parser.add_argument('-b', '--build_id', type=str, required=True)
-    parser.add_argument('-o', '--output_directory', type=str, required=True)
-    parser.add_argument('-e', '--externals_packages_directory', type=str, default=None)
-    parser.add_argument('--repo_directory_identifier', type=str, required=True)
+    parser.add_argument('--platform_target', type=str, required=True)
+    parser.add_argument('--unique_id', type=str, required=True)
+    parser.add_argument('--output_directory', type=str, required=True)
+    parser.add_argument('--source_directory', type=str)
+    parser.add_argument('--externals_packages_directory', type=str, default=None)
     args = parser.parse_args()
 
-    # full path on host machine which will be mounted inside build container
-    input_directory = os.path.join(
-        os.environ['JENKINS_OUTPUT'],
-        args.repo_directory_identifier,
-        args.build_id)
+    source_directory = args.source_directory
+    if not source_directory:
+        source_directory = os.path.join(
+            os.environ['JENKINS_OUTPUT'],
+            'irods',
+            args.unique_id)
+
     result_output = build_irods_packages(
         args.platform_target,
-        args.build_id,
-        input_directory,
+        args.unique_id,
+        source_directory,
         args.output_directory,
         args.externals_packages_directory)
     print(result_output)
