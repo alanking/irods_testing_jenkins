@@ -20,48 +20,54 @@
           <name>PARAMETER_UNIQUE_JOB_ID</name>
           <description>Unique identifier for this job which is distinct from the build ID of this particular Jenkins project. The unique ID can be shared with other Jenkins projects to build a pipeline.</description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>PARAMETER_REPO_IDENTIFIER</name>
-          <description>A keyword to identify the directory to which the code repository will be cloned and from which packages will be built.
-
-Constructed into a full path like this:
-/jenkins_output/&lt;PARAMETER_REPO_IDENTIFIER&gt;/&lt;BUILD_ID&gt;</description>
-          <defaultValue>irods_client_icommands</defaultValue>
-          <trim>false</trim>
+          <name>PARAMETER_SOURCE_DIRECTORY</name>
+          <description>Local directory for source code repository clone. REMEMBER: Jenkins is running in a container - check your mounted volumes!</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY</name>
           <description>Full path to top-level directory which holds built iRODS packages</description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_EXTERNALS_ROOT_DIRECTORY</name>
           <description></description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
     <script>node {
-    def output_directory = env.JENKINS_OUTPUT + &apos;/&apos; + env.JOB_NAME + &apos;/&apos; + PARAMETER_UNIQUE_JOB_ID
-    def irods_packages_directory = env.JENKINS_OUTPUT + &apos;/&apos; + &apos;build_irods&apos; + &apos;/&apos; + PARAMETER_UNIQUE_JOB_ID
-    if(!PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY.equals(&apos;&apos;)) {
-        irods_packages_directory = PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY
+    def unique_id = PARAMETER_UNIQUE_JOB_ID
+    if (!PARAMETER_UNIQUE_JOB_ID) {
+        unique_id = env.BUILD_ID
     }
+
+    def source_directory = PARAMETER_SOURCE_DIRECTORY
+    def irods_packages_directory = PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY
+
+    def output_directory = env.JENKINS_OUTPUT + &apos;/&apos; + env.JOB_NAME + &apos;/&apos; + unique_id
+
     def dockerfile_dir = env.GLOBAL_PARAMETER_DOCKER_REPO
     dir(dockerfile_dir) {
         def build_cmd = &apos;python build_icommands.py&apos; +
-                        &apos; -p &apos; + PARAMETER_PLATFORM_TARGET +
-                        &apos; -b &apos; + PARAMETER_UNIQUE_JOB_ID +
-                        &apos; -o &apos; + output_directory +
-                        &apos; --repo_directory_identifier &apos; + PARAMETER_REPO_IDENTIFIER +
-                        &apos; --irods_packages_root_directory &apos; + irods_packages_directory
-        if (!PARAMETER_EXTERNALS_ROOT_DIRECTORY.equals(&apos;&apos;)) {
+                        &apos; --platform_target &apos; + PARAMETER_PLATFORM_TARGET +
+                        &apos; --unique_id &apos; + unique_id +
+                        &apos; --output_directory &apos; + output_directory
+        if (source_directory) {
+            build_cmd = build_cmd + &apos; --source_directory &apos; + source_directory
+        }
+        if (irods_packages_directory) {
+            build_cmd = build_cmd + &apos; --irods_packages_root_directory &apos; + irods_packages_directory
+        }
+        if (PARAMETER_EXTERNALS_ROOT_DIRECTORY) {
             build_cmd = build_cmd + &apos; --externals_packages_directory &apos; + PARAMETER_EXTERNALS_ROOT_DIRECTORY
         }
         sh build_cmd

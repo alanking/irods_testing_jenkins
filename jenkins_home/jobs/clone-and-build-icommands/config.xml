@@ -18,47 +18,44 @@
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_UNIQUE_JOB_ID</name>
-          <description>the tag for the base os images</description>
+          <description>Unique identifier for this job which is distinct from the build ID of this particular Jenkins project. The unique ID can be shared with other Jenkins projects to build a pipeline.</description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_ICOMMANDS_REPO</name>
           <description></description>
           <defaultValue>https://github.com/irods/irods_client_icommands</defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_ICOMMANDS_COMMITISH</name>
           <description></description>
           <defaultValue>master</defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>PARAMETER_REPO_IDENTIFIER</name>
-          <description>A keyword to identify the directory to which the code repository will be cloned and from which packages will be built.
-
-Constructed into a full path like this:
-/jenkins_output/&lt;PARAMETER_REPO_IDENTIFIER&gt;/&lt;BUILD_ID&gt;</description>
-          <defaultValue>irods_client_icommands</defaultValue>
-          <trim>false</trim>
+          <name>PARAMETER_SOURCE_DIRECTORY</name>
+          <description>Local directory for source code repository clone. REMEMBER: Jenkins is running in a container - check your mounted volumes!</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY</name>
           <description>Full path to top-level directory which holds built iRODS packages</description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_EXTERNALS_ROOT_DIRECTORY</name>
           <description></description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>PARAMETER_IGNORE_CACHE</name>
           <description>If the target directory already exists and is not empty, it will be removed. If not, the directory will be left alone and the clone will be skipped.</description>
-          <defaultValue>false</defaultValue>
+          <defaultValue>true</defaultValue>
         </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
@@ -72,7 +69,7 @@ Constructed into a full path like this:
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPOSITORY&apos;, value: PARAMETER_ICOMMANDS_REPO],
                 [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_COMMITISH&apos;, value: PARAMETER_ICOMMANDS_COMMITISH],
-                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_CLONE_TARGET_DIRECTORY&apos;, value: PARAMETER_SOURCE_DIRECTORY],
                 [$class: &apos;BooleanParameterValue&apos;, name: &apos;PARAMETER_IGNORE_CACHE&apos;, value: PARAMETER_IGNORE_CACHE]
             ]   
     }   
@@ -86,7 +83,7 @@ Constructed into a full path like this:
                     parameters: [ 
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_PLATFORM_TARGET&apos;, value: os],
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_UNIQUE_JOB_ID&apos;, value: PARAMETER_UNIQUE_JOB_ID],
-                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_REPO_IDENTIFIER&apos;, value: PARAMETER_REPO_IDENTIFIER],
+                        [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_SOURCE_DIRECTORY&apos;, value: PARAMETER_SOURCE_DIRECTORY],
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY&apos;, value: PARAMETER_IRODS_PACKAGES_ROOT_DIRECTORY],
                         [$class: &apos;StringParameterValue&apos;, name: &apos;PARAMETER_EXTERNALS_ROOT_DIRECTORY&apos;, value: PARAMETER_EXTERNALS_ROOT_DIRECTORY]
                     ]
