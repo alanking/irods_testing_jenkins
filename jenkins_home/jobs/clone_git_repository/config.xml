@@ -12,34 +12,31 @@
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_UNIQUE_JOB_ID</name>
-          <description>the tag for the base os images</description>
+          <description>Unique identifier for this job which is distinct from the build ID of this particular Jenkins project. The unique ID can be shared with other Jenkins projects to build a pipeline.</description>
           <defaultValue></defaultValue>
-          <trim>false</trim>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_REPOSITORY</name>
           <description>Location of a git repository to clone (see: https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-ltrepositorygt)</description>
-          <defaultValue>EMPTY_REPOSITORY_LOCATION</defaultValue>
-          <trim>false</trim>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>PARAMETER_COMMITISH</name>
           <description>Valid git commit (e.g. SHA, branch name, tag, etc.) (see: https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-ltrepositorygt)</description>
-          <defaultValue>EMPTY_COMMITISH</defaultValue>
-          <trim>false</trim>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>PARAMETER_REPO_IDENTIFIER</name>
-          <description>A keyword to identify the directory to which the code repository will be cloned.
-
-Destination directory for clone is formed into a full path like this:
-/jenkins_output/&lt;PARAMETER_REPO_IDENTIFIER&gt;/&lt;BUILD_ID&gt;</description>
+          <name>PARAMETER_CLONE_TARGET_DIRECTORY</name>
+          <description>Destination directory for repository clone. REMEMBER: Jenkins is running in a container - check your mounted volumes!</description>
           <defaultValue></defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>PARAMETER_IGNORE_CACHE</name>
-          <description>If the target directory already exists and is not empty, it will be removed. If not, the directory will be left alone and the clone will be skipped.</description>
+          <description>If the target directory already exists and is not empty, it will be overwritten. If not, the directory will not be overwritten, and the clone will not be performed.</description>
           <defaultValue>true</defaultValue>
         </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
@@ -47,13 +44,20 @@ Destination directory for clone is formed into a full path like this:
   </properties>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
     <script>node {
+    def unique_id = PARAMETER_UNIQUE_JOB_ID
+    if (!PARAMETER_UNIQUE_JOB_ID) {
+        unique_id = env.BUILD_ID
+    }
+
     def dockerfile_dir = env.GLOBAL_PARAMETER_DOCKER_REPO
     dir(dockerfile_dir) {
         def clone_cmd = &apos;python clone_repo.py&apos; +
-                            &apos; -b &apos; + PARAMETER_UNIQUE_JOB_ID +
+                            &apos; --unique_id &apos; + unique_id +
                             &apos; --repo &apos; + PARAMETER_REPOSITORY +
-                            &apos; --commitish &apos; + PARAMETER_COMMITISH +
-                            &apos; --repo_directory_identifier &apos; + PARAMETER_REPO_IDENTIFIER
+                            &apos; --commitish &apos; + PARAMETER_COMMITISH
+        if (PARAMETER_CLONE_TARGET_DIRECTORY) {
+            clone_cmd = clone_cmd + &apos; --clone_target_directory &apos; + PARAMETER_CLONE_TARGET_DIRECTORY
+        }
         if (PARAMETER_IGNORE_CACHE == &quot;true&quot;) {
             clone_cmd = clone_cmd + &apos; --ignore_cache&apos;
         }
