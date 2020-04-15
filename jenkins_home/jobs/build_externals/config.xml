@@ -1,0 +1,54 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.38">
+  <actions/>
+  <description>Runs the build hook for iRODS externals (https://github.com/irods/externals) in a container</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.31">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_PLATFORM_TARGET</name>
+          <description>OS platform</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_UNIQUE_JOB_ID</name>
+          <description>Unique identifier for this job which is distinct from the build ID of this particular Jenkins project. The unique ID can be shared with other Jenkins projects to build a pipeline.</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_REPO_IDENTIFIER</name>
+          <description>A keyword to identify the directory to which the code repository will be cloned and from which packages will be built.
+
+Constructed into a full path like this:
+/jenkins_output/&lt;PARAMETER_REPO_IDENTIFIER&gt;/&lt;BUILD_ID&gt;</description>
+          <defaultValue>irods</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>node {
+    def output_directory = env.JENKINS_OUTPUT + &apos;/&apos; + env.JOB_NAME + &apos;/&apos; + PARAMETER_UNIQUE_JOB_ID
+    def dockerfile_dir = env.GLOBAL_PARAMETER_DOCKER_REPO
+    dir(dockerfile_dir) {
+        def build_cmd = &apos;python build_externals_on_base_os_image.py&apos; +
+                        &apos; -p &apos; + PARAMETER_PLATFORM_TARGET +
+                        &apos; -b &apos; + PARAMETER_UNIQUE_JOB_ID +
+                        &apos; -o &apos; + output_directory +
+                        &apos; --repo_directory_identifier &apos; + PARAMETER_REPO_IDENTIFIER
+        sh build_cmd
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

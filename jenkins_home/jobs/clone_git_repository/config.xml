@@ -1,0 +1,71 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.38">
+  <actions/>
+  <description>Clone a git repository to a known location</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.31">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_UNIQUE_JOB_ID</name>
+          <description>Unique identifier for this job which is distinct from the build ID of this particular Jenkins project. The unique ID can be shared with other Jenkins projects to build a pipeline.</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_REPOSITORY</name>
+          <description>Location of a git repository to clone (see: https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-ltrepositorygt)</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_COMMITISH</name>
+          <description>Valid git commit (e.g. SHA, branch name, tag, etc.) (see: https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-ltrepositorygt)</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PARAMETER_CLONE_TARGET_DIRECTORY</name>
+          <description>Destination directory for repository clone. REMEMBER: Jenkins is running in a container - check your mounted volumes!</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>PARAMETER_IGNORE_CACHE</name>
+          <description>If the target directory already exists and is not empty, it will be overwritten. If not, the directory will not be overwritten, and the clone will not be performed.</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>node {
+    def unique_id = PARAMETER_UNIQUE_JOB_ID
+    if (!PARAMETER_UNIQUE_JOB_ID) {
+        unique_id = env.BUILD_ID
+    }
+
+    def dockerfile_dir = env.GLOBAL_PARAMETER_DOCKER_REPO
+    dir(dockerfile_dir) {
+        def clone_cmd = &apos;python clone_repo.py&apos; +
+                            &apos; --unique_id &apos; + unique_id +
+                            &apos; --repo &apos; + PARAMETER_REPOSITORY +
+                            &apos; --commitish &apos; + PARAMETER_COMMITISH
+        if (PARAMETER_CLONE_TARGET_DIRECTORY) {
+            clone_cmd = clone_cmd + &apos; --clone_target_directory &apos; + PARAMETER_CLONE_TARGET_DIRECTORY
+        }
+        if (PARAMETER_IGNORE_CACHE == &quot;true&quot;) {
+            clone_cmd = clone_cmd + &apos; --ignore_cache&apos;
+        }
+        sh clone_cmd
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
