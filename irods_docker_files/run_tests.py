@@ -44,7 +44,6 @@ def run_plugin_tests(image_name, plugin_sha, machine_name, plugin_name, test_nam
     results_mount = cmd_line_args.output_directory + ':/irods_test_env'
     plugin_mount = cmd_line_args.plugin_build_dir + ':/plugin_mount_dir'
     key_mount = '/projects/irods/vsphere-testing/externals/amazon_web_services-CI.keypair:/projects/irods/vsphere-testing/externals/amazon_web_services-CI.keypair'
-    mysql_mount = '/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz:/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz'
     run_mount = '/tmp/$(mktemp -d):/run'
     externals_mount = cmd_line_args.externals_dir + ':/irods_externals'
 
@@ -57,7 +56,7 @@ def run_plugin_tests(image_name, plugin_sha, machine_name, plugin_name, test_nam
         stop_cmd = centosCmdBuilder.build_stop_cmd()
     elif 'ubuntu' in machine_name:
         ubuntuCmdBuilder = DockerCommandsBuilder()
-        ubuntuCmdBuilder.plugin_constructor(machine_name, build_mount, plugin_mount, results_mount, key_mount, mysql_mount, None, externals_mount, image_name, 'install_and_test.py', cmd_line_args.database_type, cmd_line_args.plugin_repo, plugin_sha, cmd_line_args.passthrough_arguments)
+        ubuntuCmdBuilder.plugin_constructor(machine_name, build_mount, plugin_mount, results_mount, key_mount, None, externals_mount, image_name, 'install_and_test.py', cmd_line_args.database_type, cmd_line_args.plugin_repo, plugin_sha, cmd_line_args.passthrough_arguments)
         
         run_cmd = ubuntuCmdBuilder.build_run_cmd()
         exec_cmd = ubuntuCmdBuilder.build_exec_cmd()

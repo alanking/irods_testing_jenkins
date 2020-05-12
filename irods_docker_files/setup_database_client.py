@@ -57,6 +57,30 @@ XE =
 '''
         irods_python_ci_utilities.subprocess_get_output(['sudo', 'su', '-c', "echo '{0}' > /usr/lib/oracle/11.2/client64/network/admin/tnsnames.ora".format(tns_contents)], check_rc=True)
 
+def extract_mysql_odbc_connector():
+    version = {'major':'5', 'minor':'3', 'patch':'13'}
+    odbc_name = 'mysql-connector-odbc-{0}-linux-ubuntu{1}.04-x86-64bit'.format(
+        '.'.join([v for v in version.values()]),
+        irods_python_ci_utilities.get_distribution_version_major())
+    path_to_archive = '/{}.tar.gz'.format(odbc_name)
+    url_to_archive = 'https://downloads.mysql.com/archives/get/p/10/file/{}.tar.gz'.format(odbc_name)
+    tar_output_dir = tempfile.mkdtemp(prefix='irods_mysql_connector_tar_extraction')
+
+    # get the tar.gz, extract it into a directory, and copy needed contents into /usr/lib
+    irods_python_ci_utilities.subprocess_get_output(['wget', '-O', path_to_archive, url_to_archive, '--directory', tar_output_dir], check_rc=True)
+    irods_python_ci_utilities.subprocess_get_output(['tar', 'xf', path_to_archive, '--directory', tar_output_dir], check_rc=True)
+    irods_python_ci_utilities.subprocess_get_output(['sudo', 'cp', os.path.join(tar_output_dir, odbc_name, 'lib', 'libmyodbc{}a.so'.format(version['major'])), '/usr/lib'], check_rc=True)
+    irods_python_ci_utilities.subprocess_get_output(['sudo', 'cp', os.path.join(tar_output_dir, odbc_name, 'lib', 'libmyodbc{}S.so'.format(version['major'])), '/usr/lib'], check_rc=True)
+    irods_python_ci_utilities.subprocess_get_output(['sudo', 'cp', os.path.join(tar_output_dir, odbc_name, 'lib', 'libmyodbc{}w.so'.format(version['major'])), '/usr/lib'], check_rc=True)
+
+    # Run the odbc installer
+    env_string = 'DRIVER=/usr/lib/libmyodbc{0}w.so;SETUP=/usr/lib/myodbc{0}S.so'.format(version['major'])
+    odbc_installer = os.path.join(tar_output_dir, odbc_name, 'bin', 'myodbc-installer')
+    driver_version = '.'.join([version['major'], version['minor']])
+    for driver_type in ['Unicode', 'ANSI']:
+        driver = 'MySQL ODBC {0} {1} Driver'.format(driver_version, driver_type)
+        irods_python_ci_utilities.subprocess_get_output(['sudo', odbc_installer, '-d', '-a', '-n', driver, '-t', env_string], check_rc=True)
+
 def configure_client_apt(database):
     if database == 'postgres':
         irods_python_ci_utilities.subprocess_get_output(['apt-get', 'update'], check_rc=True)
@@ -65,14 +89,7 @@ def configure_client_apt(database):
         #pass
         irods_python_ci_utilities.subprocess_get_output(['apt-get', 'update'], check_rc=True)
         irods_python_ci_utilities.install_os_packages(['mysql-client', 'libpcre3-dev', 'libmysqlclient-dev', 'build-essential', 'libtool', 'autoconf', 'unixodbc'])
-        if irods_python_ci_utilities.get_distribution_version_major() == '16':
-            tar_output_dir = tempfile.mkdtemp(prefix='irods_mysql_connector_tar_extraction')
-            irods_python_ci_utilities.subprocess_get_output(['tar', 'xf', '/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz', '--directory', tar_output_dir], check_rc=True)
-            irods_python_ci_utilities.subprocess_get_output(['sudo', 'cp', os.path.join(tar_output_dir, 'mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit', 'lib', 'libmyodbc5a.so'), '/usr/lib'], check_rc=True)
-            irods_python_ci_utilities.subprocess_get_output(['sudo', 'cp', os.path.join(tar_output_dir, 'mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit', 'lib', 'libmyodbc5S.so'), '/usr/lib'], check_rc=True)
-            irods_python_ci_utilities.subprocess_get_output(['sudo', 'cp', os.path.join(tar_output_dir, 'mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit', 'lib', 'libmyodbc5w.so'), '/usr/lib'], check_rc=True)
-            irods_python_ci_utilities.subprocess_get_output(['sudo', os.path.join(tar_output_dir, 'mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit', 'bin', 'myodbc-installer'), '-d', '-a', '-n', 'MySQL ODBC 5.3 Unicode Driver', '-t', 'DRIVER=/usr/lib/libmyodbc5w.so;SETUP=/usr/lib/myodbc5S.so'], check_rc=True)
-            irods_python_ci_utilities.subprocess_get_output(['sudo', os.path.join(tar_output_dir, 'mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit', 'bin', 'myodbc-installer'), '-d', '-a', '-n', 'MySQL ODBC 5.3 ANSI Driver', '-t', 'DRIVER=/usr/lib/libmyodbc5a.so;SETUP=/usr/lib/myodbc5S.so'], check_rc=True)
+        extract_mysql_odbc_connector()
     elif database == 'oracle':
         install_oracle_dependencies()
         install_oracle_client()
@@ -113,17 +130,6 @@ def install_oracle_dependencies():
         return dispatch_map[irods_python_ci_utilities.get_distribution()]()
     except KeyError:
         irods_python_ci_utilities.raise_not_implemented_for_distribution()
-
-def install_mysql_pcre(dependencies, mysql_service):
-        irods_python_ci_utilities.install_os_packages(dependencies)
-        local_pcre_git_dir = os.path.expanduser('/lib_mysqludf_preg')
-        irods_python_ci_utilities.subprocess_get_output(['git', 'clone', 'https://github.com/mysqludf/lib_mysqludf_preg.git', local_pcre_git_dir], check_rc=True)
-        irods_python_ci_utilities.subprocess_get_output(['git', 'checkout', 'lib_mysqludf_preg-1.1'], cwd=local_pcre_git_dir, check_rc=True)
-        irods_python_ci_utilities.subprocess_get_output(['autoreconf', '--force', '--install'], cwd=local_pcre_git_dir, check_rc=True)
-        irods_python_ci_utilities.subprocess_get_output(['./configure'], cwd=local_pcre_git_dir, check_rc=True)
-        irods_python_ci_utilities.subprocess_get_output(['make', 'install'], cwd=local_pcre_git_dir, check_rc=True)
-        irods_python_ci_utilities.subprocess_get_output('mysql --user=root --password="password" < installdb.sql', shell=True, cwd=local_pcre_git_dir, check_rc=True)
-        irods_python_ci_utilities.subprocess_get_output(['systemctl', 'restart', mysql_service], check_rc=True)
 
 def main():
     parser = argparse.ArgumentParser()

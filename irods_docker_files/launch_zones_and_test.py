@@ -43,7 +43,6 @@ def create_federation(federation_tag_list, network_name, cmd_line_args):
     upgrade_mount = None
     run_mount = None
     externals_mount = None
-    mysql_mount = '/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz:/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz'
 
     zone1 = 'tempZone'
     zone2 = 'otherZone'
@@ -69,7 +68,7 @@ def create_federation(federation_tag_list, network_name, cmd_line_args):
         machine_list.append(federation_name)
 
         cmdsBuilder = DockerCommandsBuilder()
-        cmdsBuilder.core_constructor(federation_name, build_mount, upgrade_mount, results_mount, run_mount, externals_mount, mysql_mount, federation_tag, 'setup_fed_and_test.py', cmd_line_args.database_type, cmd_line_args.specific_test, cmd_line_args.test_type, False, True, database_container)
+        cmdsBuilder.core_constructor(federation_name, build_mount, upgrade_mount, results_mount, run_mount, externals_mount, federation_tag, 'setup_fed_and_test.py', cmd_line_args.database_type, cmd_line_args.specific_test, cmd_line_args.test_type, False, True, database_container)
         cmdsBuilder.set_hostname(federated_zone_name)
         cmdsBuilder.set_zone_name(zone_name)
         cmdsBuilder.set_remote_zone(remote_federated_zone)

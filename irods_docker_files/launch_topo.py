@@ -47,14 +47,13 @@ def create_topology(cmd_line_args, provider_tag, consumer_tag_list, machine_list
 
     run_mount = None
     externals_mount = None
-    mysql_mount = '/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz:/projects/irods/vsphere-testing/externals/mysql-connector-odbc-5.3.7-linux-ubuntu16.04-x86-64bit.tar.gz'
 
     provider_name = cmd_line_args.platform_target + '-' + cmd_line_args.test_name_prefix + '-provider'
     machine_list.append(provider_name)
 
     database_container = cmd_line_args.platform_target + '_' + cmd_line_args.test_name_prefix + '_' + cmd_line_args.test_type + '_' + cmd_line_args.database_type + '-database'
     cmdsBuilder = DockerCommandsBuilder()
-    cmdsBuilder.core_constructor(provider_name, build_mount, upgrade_mount, results_mount, run_mount, externals_mount, mysql_mount, provider_tag, 'setup_topo.py', cmd_line_args.database_type, cmd_line_args.specific_test, cmd_line_args.test_type, False, True, database_container)
+    cmdsBuilder.core_constructor(provider_name, build_mount, upgrade_mount, results_mount, run_mount, externals_mount, provider_tag, 'setup_topo.py', cmd_line_args.database_type, cmd_line_args.specific_test, cmd_line_args.test_type, False, True, database_container)
     cmdsBuilder.set_machine_list(machine_list)
     cmdsBuilder.set_use_ssl(cmd_line_args.use_ssl)
 

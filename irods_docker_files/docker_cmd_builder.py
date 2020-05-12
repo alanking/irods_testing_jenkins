@@ -9,7 +9,6 @@ class DockerCommandsBuilder(object):
         self.key_mount = None
         self.run_mount = None
         self.externals_mount = None
-        self.mysql_mount = None
         self.image_name = None
         self.python_script = None
         self.database_type = None
@@ -57,9 +56,6 @@ class DockerCommandsBuilder(object):
 
     def set_run_mount(self, run_mount):
         self.run_mount = run_mount
-
-    def set_mysql_mount(self, mysql_mount):
-        self.mysql_mount = mysql_mount
 
     def set_python_script(self, python_script):
         self.python_script = python_script
@@ -109,13 +105,12 @@ class DockerCommandsBuilder(object):
     def set_remote_zone(self, remote_zone):
         self.remote_zone = remote_zone
 
-    def plugin_constructor(self, machine_name, build_mount, plugin_mount, results_mount, key_mount, mysql_mount, run_mount, externals_mount, image_name, python_script, database_type, plugin_repo, plugin_commitish, passthru_args):
+    def plugin_constructor(self, machine_name, build_mount, plugin_mount, results_mount, key_mount, run_mount, externals_mount, image_name, python_script, database_type, plugin_repo, plugin_commitish, passthru_args):
         self.set_machine_name(machine_name)
         self.set_build_mount(build_mount)
         self.set_plugin_mount(plugin_mount)
         self.set_results_mount(results_mount)
         self.set_key_mount(key_mount)
-        self.set_mysql_mount(mysql_mount)
         self.set_externals_mount(externals_mount)
         self.set_image_name(image_name)
         self.set_run_mount(run_mount)
@@ -125,13 +120,12 @@ class DockerCommandsBuilder(object):
         self.set_plugin_commitish(plugin_commitish)
         self.set_passthru_args(passthru_args)
 
-    def core_constructor(self, machine_name, build_mount, upgrade_mount, results_mount, run_mount, externals_mount, mysql_mount, image_name, python_script, database_type, test_name, test_type, is_unit_test, is_provider, database_machine):
+    def core_constructor(self, machine_name, build_mount, upgrade_mount, results_mount, run_mount, externals_mount, image_name, python_script, database_type, test_name, test_type, is_unit_test, is_provider, database_machine):
         self.set_machine_name(machine_name)
         self.set_build_mount(build_mount)
         self.set_upgrade_mount(upgrade_mount)
         self.set_results_mount(results_mount)
         self.set_externals_mount(externals_mount)
-        self.set_mysql_mount(mysql_mount)
         self.set_image_name(image_name)
         self.set_run_mount(run_mount)
         self.set_python_script(python_script)
@@ -163,8 +157,6 @@ class DockerCommandsBuilder(object):
             cmd.extend(['-v', self.externals_mount])
         if self.key_mount is not None and 's3' in self.machine_name:
             cmd.extend(['-v', self.key_mount])
-        if self.database_type == 'mysql' and self.mysql_mount is not None:
-            cmd.extend(['-v', self.mysql_mount])
         if self.database_type == 'oracle' and self.docker_socket is not None:
             cmd.extend(['-v', self.docker_socket])
         if self.test_type is not None:
